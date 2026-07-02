@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 
 from app.routes.employee_router import (
     router as employee_router
@@ -20,19 +21,26 @@ from app.features.settings.seed_settings import (
     seed_settings
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        await seed_settings()
+        print("✅ Settings seeded successfully")
+    except Exception as e:
+        print(f"❌ Error occurred while seeding settings: {e}")
+    yield
 
-app = FastAPI()
+app = FastAPI(
+    title="Employee Payroll and Attendance Management system",
+    description="Backend system for managing employee payroll and attendance",
+    version="1.0.0",
+    lifespan=lifespan
+    )
 
 
-@app.on_event("startup")
-async def startup_event():
-
-    await seed_settings()
-
-
-origins = {
+origins = [
     "http://localhost:5173"
-}
+]
 
 
 app.add_middleware(

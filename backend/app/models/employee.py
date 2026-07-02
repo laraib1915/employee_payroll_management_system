@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_serializer, Field
+from pydantic import BaseModel, model_serializer, Field, field_validator
 from bson import ObjectId
 from enum import Enum
 from typing import Optional, List
@@ -10,7 +10,6 @@ class EmployeeType (str, Enum):
     intern ="Intern"
 
 
-
 class EmployeeStatus (str, Enum):
     active = "Active"
     inactive = "Inactive"
@@ -19,17 +18,45 @@ class EmployeeStatus (str, Enum):
 class EmployeeBase(BaseModel):
     employee_number: str
     employee_name: str
-    contact_number: str
+    contact_number: Optional[str] = None
     cnic: Optional[str] = None
-    department: str
-    designation: str
+    department: Optional[str] = None
+    designation: Optional[str] = None
     employment_type: EmployeeType
+    working_days_per_month: int | None = None
     monthly_salary: float
     annual_leave_balance: int = 10
     joining_date: date
     probation_duration: Optional[int] = None
     status: EmployeeStatus
 
+    @field_validator("contact_number")
+    @classmethod
+    def validate_contact_number(cls, value):
+        if value is None or value == "":
+            return value
+
+        if not value.isdigit():
+            raise ValueError("Contact number must contain only digits")
+
+        if len(value) != 11:
+            raise ValueError("Contact number must be exactly 11 digits")
+
+        return value
+
+    @field_validator("cnic")
+    @classmethod
+    def validate_cnic(cls, value):
+        if value is None or value == "":
+            return value
+
+        if not value.isdigit():
+            raise ValueError("CNIC must contain only digits")
+
+        if len(value) != 13:
+            raise ValueError("CNIC must be exactly 13 digits")
+
+        return value
 
 class CreateEmployee(EmployeeBase):
     pass
@@ -44,10 +71,33 @@ class UpdateEmployee(BaseModel):
     designation: Optional[str] = None
     employment_type: Optional[EmployeeType] = None
     monthly_salary: Optional[float] = None
+    working_days_per_month: Optional[int] = None
     joining_date: Optional[date] = None
     annual_leave_balance: Optional[int] = None
     probation_duration: Optional[int] = None
     status: Optional[EmployeeStatus] = None
+
+    @field_validator("contact_number")
+    @classmethod
+    def validate_contact_number(cls, value):
+        if value is None or value == "":
+            return value
+        if not value.isdigit():
+            raise ValueError("Contact number must contain only digits")
+        if len(value) != 11:
+            raise ValueError("Contact number must be exactly 11 digits")
+        return value
+
+    @field_validator("cnic")
+    @classmethod
+    def validate_cnic(cls, value):
+        if value is None or value == "":
+            return value
+        if not value.isdigit():
+            raise ValueError("CNIC must contain only digits")
+        if len(value) != 13:
+            raise ValueError("CNIC must be exactly 13 digits")
+        return value
 
 
 class GetEmployee(BaseModel):
@@ -61,6 +111,7 @@ class GetEmployee(BaseModel):
     employment_type: EmployeeType
     monthly_salary: float
     annual_leave_balance: int
+    working_days_per_month: int | None = None
     joining_date: date
     probation_duration: int | None = None
     status: EmployeeStatus

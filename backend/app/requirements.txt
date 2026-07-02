@@ -6,3 +6,5 @@ pymongo
 uvicorn
 python-dotenv
 python-multipart
+pandas
+openpyxl

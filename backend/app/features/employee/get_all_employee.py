@@ -10,7 +10,6 @@ from app.models.employee import (
 async def get_all_employee():
     try:
         db = await get_db_conn()
-        employees_cursor = db[collections.EMPLOYEES].find()
         cursor = db[collections.EMPLOYEES].find()
         employees = await cursor.to_list(length=None)
         employee_responses = []

@@ -1,45 +1,25 @@
 async def calculate_lates(
-
     attendance_records: list,
-
     settings,
-
     daily_salary: float
 ):
-
-    # ===============================
     # Count Late Arrivals
-    # ===============================
     late_count = 0
-
     for day in attendance_records:
-
         late_value = day.get("late")
-
         if (
             late_value is not None
             and str(late_value).strip() != ""
         ):
             late_count += 1
-
-    # ===============================
     # Allowed Lates
-    # ===============================
-    allowed_lates = (
-        settings.allowed_late_arrivals
-    )
-
+    allowed_lates = (settings.get("allowed_lates", 0))
     extra_lates = max(
         0,
         late_count - allowed_lates
     )
-
-    # ===============================
     # Deduction Calculation
-    # ===============================
-    deduction_rate = (
-        settings.late_deduction_rate
-    )
+    deduction_rate = (settings.get("deduction_rate", 0))
 
     late_deduction = (
         extra_lates *
@@ -48,12 +28,7 @@ async def calculate_lates(
 
     return {
 
-        "late_count":
-        late_count,
-
-        "extra_lates":
-        extra_lates,
-
-        "late_deduction":
-        late_deduction
+        "late_count":late_count,
+        "extra_lates":extra_lates,
+        "late_deduction":late_deduction
     }

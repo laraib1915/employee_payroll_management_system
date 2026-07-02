@@ -3,3 +3,4 @@ class collections:
     ATTENDANCE = "attendance"
     PAYROLL = "payroll"
     SETTINGS = "settings"
+    PAYROLL_SUMMARY = "payroll_summary"

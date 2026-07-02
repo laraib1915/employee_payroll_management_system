@@ -50,3 +50,4 @@ async def get_db_conn () -> AsyncIOMotorDatabase:
             return _db_conn
         except Exception as reconnect_error:
             logger.exception(  f"MongoDB reconnection failed: {reconnect_error}" )
+            raise

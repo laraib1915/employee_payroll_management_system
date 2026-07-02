@@ -8,7 +8,6 @@ from app.features.employee.update_employee import update_employee
 from app.features.employee.get_employee import get_employee
 from app.features.employee.get_all_employee import get_all_employee
 from app.features.employee.deactivate_employee import deactivate_employee
-
 from app.models.employee import (
     CreateEmployee,
     UpdateEmployee

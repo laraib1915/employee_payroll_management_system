@@ -103,6 +103,7 @@ async def upload_attendance(file: UploadFile):
         # Group Records
         # =========================
         grouped_data = defaultdict(list)
+        seen_dates = defaultdict(set)
 
         for row in valid_rows:
 
@@ -112,6 +113,11 @@ async def upload_attendance(file: UploadFile):
                 row.date.month,
                 row.date.year
             )
+
+            if row.date in seen_dates[key]:
+                continue
+
+            seen_dates[key].add(row.date)
 
             attendance_day = AttendanceDay(
                 date=row.date,

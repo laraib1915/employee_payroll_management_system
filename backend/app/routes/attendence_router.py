@@ -15,7 +15,6 @@ async def upload_attendance_api(
 ):
     try:
         return await upload_attendance(file)
-
     except Exception as e:
         logger.exception("Error uploading attendance file")
         return await core_response(
