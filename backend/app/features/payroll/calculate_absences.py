@@ -13,7 +13,7 @@ async def calculate_absences(
         if day.get("absent") is True:
             absent_days += 1
 
-    monthly_leave_allowed = (settings.get("monthly_leave_allowed",1))
+    monthly_leave_allowed = (settings.get("monthly_leave_allocation",0))
     monthly_leave_used = min(absent_days,monthly_leave_allowed)
     
     remaining_absences = (absent_days - monthly_leave_used)

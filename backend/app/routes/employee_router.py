@@ -7,7 +7,6 @@ from app.features.employee.create_employee import create_employee
 from app.features.employee.update_employee import update_employee
 from app.features.employee.get_employee import get_employee
 from app.features.employee.get_all_employee import get_all_employee
-from app.features.employee.deactivate_employee import deactivate_employee
 from app.models.employee import (
     CreateEmployee,
     UpdateEmployee
@@ -75,21 +74,6 @@ async def update_employee_api(
 
     except Exception as e:
         logger.exception("Error in update employee")
-        return await core_response(
-            status_code=500,
-            message=str(e)
-        )
-
-
-@router.patch("/{employee_id}/deactivate")
-async def deactivate_employee_api(
-    employee_id: str
-):
-    try:
-        return await deactivate_employee(employee_id)
-
-    except Exception as e:
-        logger.exception("Error in deactivate employee")
         return await core_response(
             status_code=500,
             message=str(e)

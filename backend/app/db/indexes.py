@@ -17,9 +17,45 @@ async def create_indexes():
             [
                 ("employee_no", 1),
                 ("month", 1),
-                ("year", 1) 
-            ], 
-            unique=True 
+                ("year", 1)
+            ],
+            unique=True,
+            name="attendance_employee_month_year_unique"
+        )
+
+        await db[collections.ATTENDANCE].create_index(
+            [
+                ("month", 1),
+                ("year", 1)
+            ],
+            name="attendance_month_year"
+        )
+
+        await db[collections.PAYROLL].create_index(
+            [
+                ("employee_no", 1),
+                ("month", 1),
+                ("year", 1)
+            ],
+            unique=True,
+            name="payroll_employee_month_year_unique"
+        )
+
+        await db[collections.PAYROLL].create_index(
+            [
+                ("month", 1),
+                ("year", 1)
+            ],
+            name="payroll_month_year"
+        )
+
+        await db[collections.PAYROLL_SUMMARY].create_index(
+            [
+                ("month", 1),
+                ("year", 1)
+            ],
+            unique=True,
+            name="payroll_summary_month_year_unique"
         )
 
         logger.info("Database indexes created successfully")

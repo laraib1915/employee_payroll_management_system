@@ -71,12 +71,14 @@ async def upload_attendance(file: UploadFile):
         valid_rows = []
         errors = []
 
+
         # =========================
         # Validate Rows
         # =========================
         for index, row in df.iterrows():
             try:
                 row_data = row.to_dict()
+
                 # Convert NaN to None
                 row_data = {
                     k: None if pd.isna(v) else v
@@ -90,7 +92,11 @@ async def upload_attendance(file: UploadFile):
                         dayfirst=True,
                         errors="coerce"
                     ).date()
-                attendance = AttendanceExcelRow.model_validate( row_data)
+
+                attendance = AttendanceExcelRow.model_validate(
+                    row_data
+                )
+
                 valid_rows.append(attendance)
 
             except Exception as e:
@@ -98,6 +104,52 @@ async def upload_attendance(file: UploadFile):
                     "row": index + 2,
                     "error": str(e)
                 })
+
+        # =========================
+        # Validate Employees Exist
+        # =========================
+
+        employee_numbers = list({
+            str(row.employee_no).strip()
+            for row in valid_rows
+        })
+
+        existing_employees = await db[
+            collections.EMPLOYEES
+        ].find(
+            {
+                "employee_number": {
+                    "$in": employee_numbers
+                }
+            }
+        ).to_list(length=None)
+
+        existing_employee_numbers = {
+            str(employee["employee_number"]).strip()
+            for employee in existing_employees
+        }
+
+        filtered_valid_rows = []
+
+        for row in valid_rows:
+
+            if (
+                str(row.employee_no).strip()
+                not in existing_employee_numbers
+            ):
+
+                errors.append({
+                    "row_employee_no": row.employee_no,
+                    "row_employee_name": row.name,
+                    "error": "Employee does not exist"
+                })
+
+                continue
+
+            filtered_valid_rows.append(row)
+
+        valid_rows = filtered_valid_rows
+
 
         # =========================
         # Group Records
@@ -160,7 +212,7 @@ async def upload_attendance(file: UploadFile):
             )
 
             existing_doc = await db[collections.ATTENDANCE].find_one({
-                "employee_no": employee_no,
+                "employee_no": str(employee_no),
                 "month": month,
                 "year": year
             })
@@ -222,3 +274,7 @@ async def upload_attendance(file: UploadFile):
             message="Failed to upload attendance file.",
             status_code=500
         )
+    
+
+
+    

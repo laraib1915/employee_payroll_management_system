@@ -18,12 +18,11 @@ class EmployeeStatus (str, Enum):
 class EmployeeBase(BaseModel):
     employee_number: str
     employee_name: str
-    contact_number: Optional[str] = None
-    cnic: Optional[str] = None
-    department: Optional[str] = None
-    designation: Optional[str] = None
+    contact_number: Optional[str] | None = None
+    cnic: Optional[str] | None = None
+    department: Optional[str] | None = None
+    designation: Optional[str] | None = None
     employment_type: EmployeeType
-    working_days_per_month: int | None = None
     monthly_salary: float
     annual_leave_balance: int = 10
     joining_date: date
@@ -57,6 +56,21 @@ class EmployeeBase(BaseModel):
             raise ValueError("CNIC must be exactly 13 digits")
 
         return value
+    
+    @field_validator(
+        "contact_number",
+        "cnic",
+        "department",
+        "designation",
+        mode="before"
+    )
+    @classmethod
+    def convert_swagger_string(cls, value):
+
+        if value == "string":
+            return None
+
+        return value
 
 class CreateEmployee(EmployeeBase):
     pass
@@ -65,13 +79,12 @@ class CreateEmployee(EmployeeBase):
 class UpdateEmployee(BaseModel):
     employee_number: Optional[str] = None
     employee_name: Optional[str] = None
-    contact_number: Optional[str] = None
-    cnic: Optional[str] = None
-    department: Optional[str] = None
-    designation: Optional[str] = None
+    contact_number: Optional[str] | None = None
+    cnic: Optional[str] | None = None
+    department: Optional[str] | None = None
+    designation: Optional[str] | None = None
     employment_type: Optional[EmployeeType] = None
     monthly_salary: Optional[float] = None
-    working_days_per_month: Optional[int] = None
     joining_date: Optional[date] = None
     annual_leave_balance: Optional[int] = None
     probation_duration: Optional[int] = None
@@ -104,14 +117,13 @@ class GetEmployee(BaseModel):
     id: str
     employee_number: str
     employee_name: str
-    contact_number: str
+    contact_number: str | None = None
     cnic: str | None = None
-    department: str
-    designation: str
+    department: str | None = None
+    designation: str | None = None
     employment_type: EmployeeType
     monthly_salary: float
     annual_leave_balance: int
-    working_days_per_month: int | None = None
     joining_date: date
     probation_duration: int | None = None
     status: EmployeeStatus

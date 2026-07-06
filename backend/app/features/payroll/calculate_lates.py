@@ -6,20 +6,20 @@ async def calculate_lates(
     # Count Late Arrivals
     late_count = 0
     for day in attendance_records:
-        late_value = day.get("late")
+        late_value = day.get("late_minutes")
         if (
             late_value is not None
             and str(late_value).strip() != ""
         ):
             late_count += 1
     # Allowed Lates
-    allowed_lates = (settings.get("allowed_lates", 0))
+    allowed_lates = (settings.get("allowed_late_arrivals", 0))
     extra_lates = max(
         0,
         late_count - allowed_lates
     )
     # Deduction Calculation
-    deduction_rate = (settings.get("deduction_rate", 0))
+    deduction_rate = (settings.get("late_deduction_rate", 0))
 
     late_deduction = (
         extra_lates *

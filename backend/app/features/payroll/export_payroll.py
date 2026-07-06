@@ -4,6 +4,15 @@ from openpyxl import Workbook
 from app.db.mongo import get_db_conn
 from app.db.collections import collections
 from app.logging_config import logger
+from openpyxl.styles import (
+    Font,
+    PatternFill,
+    Border,
+    Side,
+    Alignment
+)
+
+from openpyxl.utils import get_column_letter
 
 async def export_salary_sheet(
     month: int,
@@ -43,6 +52,7 @@ async def export_salary_sheet(
             "Per Day Salary",
             "Working Days",
             "Worked Days",
+            "Worked Days Override",
             "Absent Days",
             "Monthly Leave Used",
             "Annual Leave Used",
@@ -52,6 +62,7 @@ async def export_salary_sheet(
             "Late Deduction",
             "Half Days",
             "Half Day Deduction",
+            "Half Days Override",
             "Bonus",
             "Loan Deduction",
             "Total Deductions",
@@ -59,8 +70,108 @@ async def export_salary_sheet(
             "Salary Received"
         ]
         worksheet.append(headers)
+        # =========================
+        # Header Styling
+        # =========================
+
+        header_fill = PatternFill(
+            start_color="1F4E78",
+            end_color="1F4E78",
+            fill_type="solid"
+        )
+
+        header_font = Font(
+            color="FFFFFF",
+            bold=True
+        )
+
+        thin_border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin")
+        )
+
+        for cell in worksheet[1]:
+
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.border = thin_border
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center"
+            )
+
+        # Freeze Header Row
+
+        worksheet.freeze_panes = "A2"
+
         # Employee Payroll Records
         for payroll in payrolls:
+           
+            for row in worksheet.iter_rows(
+                min_row=2,
+                max_row=worksheet.max_row
+            ):
+
+                for cell in row:
+
+                    cell.border = thin_border
+
+                    cell.alignment = Alignment(
+                        horizontal="center",
+                        vertical="center"
+                    )
+
+            # =========================
+            # Currency Formatting
+            # =========================
+
+            currency_columns = [
+                6,   # Monthly Salary
+                7,   # Per Day Salary
+                16,  # Leave Deduction
+                18,  # Late Deduction
+                20,  # Half Day Deduction
+                21,  # Bonus
+                22,  # Loan Deduction
+                23,  # Total Deductions
+                24   # Final Salary
+            ]
+
+            for col in currency_columns:
+
+                for cell in worksheet.iter_cols(
+                    min_col=col,
+                    max_col=col,
+                    min_row=2,
+                    max_row=worksheet.max_row
+                ):
+
+                    for c in cell:
+
+                        c.number_format = '#,##0.00'
+
+            # =========================
+            # Auto Adjust Column Width
+            # =========================
+
+            for column_cells in worksheet.columns:
+
+                length = max(
+                    len(str(cell.value))
+                    if cell.value is not None
+                    else 0
+                    for cell in column_cells
+                )
+
+                worksheet.column_dimensions[
+                    get_column_letter(
+                        column_cells[0].column
+                    )
+                ].width = length + 5
+
+
 
             total_deductions = (
                 payroll.get(
@@ -92,6 +203,7 @@ async def export_salary_sheet(
                     payroll.get("per_day_salary"),
                     payroll.get("working_days"),
                     payroll.get("worked_days"),
+                    payroll.get("worked_days_override"),
                     payroll.get("absent_days"),
                     payroll.get("monthly_leave_used"),
                     payroll.get("annual_leave_used"),
@@ -100,6 +212,7 @@ async def export_salary_sheet(
                     payroll.get("late_count"),
                     payroll.get("late_deduction"),
                     payroll.get("half_days"),
+                    payroll.get("half_days_override"),
                     payroll.get("half_day_deduction"),
                     payroll.get("bonus"),
                     payroll.get("loan_deduction"),
@@ -167,6 +280,29 @@ async def export_salary_sheet(
                 )
             ]
         )
+        
+        # =========================
+        # Payroll Summary Styling
+        # =========================
+
+        summary_row = worksheet.max_row - 6
+
+        for row in range(summary_row, worksheet.max_row + 1):
+
+            worksheet.cell(
+                row=row,
+                column=1
+            ).font = Font(bold=True)
+
+            worksheet.cell(
+                row=row,
+                column=1
+            ).fill = PatternFill(
+                start_color="D9EAF7",
+                end_color="D9EAF7",
+                fill_type="solid"
+            )
+
         # Return Excel File
         excel_file = BytesIO()
         workbook.save(excel_file)

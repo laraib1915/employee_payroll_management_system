@@ -57,7 +57,10 @@ async def create_employee(
         return await core_response(
             status_code=201,
             message="Employee created successfully",
-            data=employee_response.model_dump(mode="json")
+            data=employee_response.model_dump(
+                mode="json",
+                exclude_none=True
+                )
         )
 
     except Exception as e:

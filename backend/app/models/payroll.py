@@ -24,6 +24,7 @@ class PayrollDocument(BaseModel):
     late_count: int = 0
     late_deduction: float = 0
     half_days: int = 0
+    half_days_override: int | None = None
     half_day_deduction: float = 0
     overtime_hours: float = 0
     bonus: float = 0.0
