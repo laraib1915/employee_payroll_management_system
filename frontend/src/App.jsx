@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
 // Pages
@@ -18,9 +18,13 @@ const AppLayout = ({ children }) => {
   return (
     <div style={{ display: 'flex' }}>
       <Sidebar />
-      <div style={{ flex: 1, marginLeft: '250px' }}>
+      <div style={{ flex: 1, marginLeft: '240px' }}>
         <Navbar />
-        <div style={{ padding: '90px 30px 30px', background: 'var(--light-grey-bg)', minHeight: '100vh' }}>
+        <div style={{ 
+          padding: '90px 32px 32px',
+          background: '#f8f9fc',
+          minHeight: '100vh',
+        }}>
           {children}
         </div>
       </div>
@@ -33,10 +37,7 @@ function App() {
     <Router>
       <Toaster />
       <Routes>
-        {/* Landing Page - No login required */}
         <Route path="/" element={<Landing />} />
-        
-        {/* Protected Routes - Now just layout without auth check */}
         <Route
           path="/dashboard"
           element={

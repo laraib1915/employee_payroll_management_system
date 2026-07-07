@@ -4,6 +4,7 @@ import { useNotification } from '../hooks/useNotification';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import EmployeeForm from '../components/employees/EmployeeForm';
 import EmployeeList from '../components/employees/EmployeeList';
+import { FiPlus } from 'react-icons/fi';
 
 const Employees = () => {
   const [employees, setEmployees] = useState([]);
@@ -19,9 +20,7 @@ const Employees = () => {
   const fetchEmployees = async () => {
     try {
       const response = await employeeApi.getAllEmployees();
-      console.log('Employees API Response:', response);
       
-      // ✅ FIXED: Extract employees from nested structure
       let employeesData = [];
       if (response.data && response.data.employees) {
         employeesData = response.data.employees;
@@ -31,8 +30,6 @@ const Employees = () => {
         employeesData = response;
       }
       
-      console.log('✅ Processed employees:', employeesData);
-      console.log('✅ Total employees:', employeesData.length);
       setEmployees(employeesData);
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -80,14 +77,18 @@ const Employees = () => {
   if (loading) return <LoadingSpinner size="large" />;
 
   return (
-    <div>
+    <div style={styles.container}>
       <div style={styles.header}>
-        <h2>Employees</h2>
+        <div>
+          <h1 style={styles.pageTitle}>Employees</h1>
+          <p style={styles.pageSubtitle}>Manage your workforce and employee records</p>
+        </div>
         <button
           onClick={() => setShowForm(!showForm)}
           style={styles.addButton}
         >
-          {showForm ? 'Cancel' : '+ Add Employee'}
+          <FiPlus size={18} />
+          {showForm ? 'Cancel' : 'Add Employee'}
         </button>
       </div>
 
@@ -104,31 +105,53 @@ const Employees = () => {
       <EmployeeList
         employees={employees}
         onEdit={handleEdit}
+        onRefresh={fetchEmployees}
       />
     </div>
   );
 };
 
 const styles = {
+  container: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+  },
   header: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
+    alignItems: 'flex-start',
+    marginBottom: '30px',
+    flexWrap: 'wrap',
+    gap: '15px',
+  },
+  pageTitle: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    margin: '0 0 6px 0',
+  },
+  pageSubtitle: {
+    fontSize: '15px',
+    color: '#6b7280',
+    margin: 0,
   },
   addButton: {
-    padding: '10px 20px',
-    background: 'var(--color-primary)',
-    color: '#fff',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 24px',
+    background: '#027DFF',
+    color: '#ffffff',
     border: 'none',
-    borderRadius: 'var(--radius)',
-    fontSize: 'var(--font-sm)',
-    fontWeight: 'var(--font-medium)',
+    borderRadius: '10px',
+    fontSize: '14px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 8px rgba(2, 125, 255, 0.25)',
   },
   formContainer: {
-    marginBottom: '20px',
+    marginBottom: '24px',
   },
 };
 

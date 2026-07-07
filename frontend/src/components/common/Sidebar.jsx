@@ -5,7 +5,9 @@ import {
   FiUsers, 
   FiUpload, 
   FiDollarSign, 
-  FiSettings
+  FiSettings,
+  FiMail,
+  FiInfo
 } from 'react-icons/fi';
 
 const Sidebar = () => {
@@ -21,9 +23,24 @@ const Sidebar = () => {
 
   return (
     <div style={styles.sidebar}>
-      <div style={styles.logo}>
-        <h2>Payroll System</h2>
+      {/* Logo Section */}
+      <div style={styles.logoSection}>
+        <Link to="/dashboard" style={styles.logoLink}>
+          <div style={styles.logoContainer}>
+            <img 
+              src="/system-heuristics-og.png" 
+              alt="System Heuristics" 
+              style={styles.logoImage}
+            />
+          </div>
+          <div style={styles.logoTextContainer}>
+            <span style={styles.logoText}>System Heuristics</span>
+            <span style={styles.logoSubtext}>Payroll System</span>
+          </div>
+        </Link>
       </div>
+
+      {/* Navigation */}
       <nav style={styles.nav}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path || 
@@ -38,48 +55,176 @@ const Sidebar = () => {
                 ...(isActive ? styles.navItemActive : {}),
               }}
             >
-              <Icon size={20} />
-              <span>{item.label}</span>
+              <Icon size={20} style={styles.navIcon} />
+              <span style={styles.navLabel}>{item.label}</span>
+              {isActive && <span style={styles.activeIndicator} />}
             </Link>
           );
         })}
       </nav>
+
+      {/* Footer */}
+      <div style={styles.footer}>
+        <div style={styles.footerItem}>
+          <FiMail size={14} style={styles.footerIcon} />
+          <span style={styles.footerText}>system_heuristics@gmail.com</span>
+        </div>
+        <div style={styles.footerItem}>
+          <FiInfo size={14} style={styles.footerIcon} />
+          <span style={styles.footerText}>About</span>
+        </div>
+        <div style={styles.footerDivider} />
+        <div style={styles.copyright}>
+          © {new Date().getFullYear()} System Heuristics
+        </div>
+        <div style={styles.version}>v1.0.0</div>
+      </div>
     </div>
   );
 };
 
 const styles = {
   sidebar: {
-    width: '250px',
+    width: '240px',
     height: '100vh',
-    background: 'var(--bg-dark)',
+    background: 'linear-gradient(180deg, #0d1526 0%, #0a0f1e 100%)',
     position: 'fixed',
     left: 0,
     top: 0,
-    color: '#fff',
-    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    borderRight: '1px solid rgba(255, 255, 255, 0.08)',
   },
-  logo: {
-    padding: '20px',
-    borderBottom: '1px solid rgba(255,255,255,0.1)',
+  logoSection: {
+    padding: '20px 16px 16px 16px',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+  },
+  logoLink: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    textDecoration: 'none',
+  },
+  logoContainer: {
+    width: '44px',
+    height: '44px',
+    borderRadius: '10px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    overflow: 'hidden',
+    backgroundColor: '#ffffff',
+    padding: '4px',
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+  },
+  logoTextContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1px',
+    minWidth: 0,
+  },
+  logoText: {
+    fontSize: '16px',
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: '-0.3px',
+    lineHeight: '1.2',
+    whiteSpace: 'nowrap',
+  },
+  logoSubtext: {
+    fontSize: '10px',
+    color: 'rgba(255,255,255,0.5)',
+    letterSpacing: '0.5px',
+    textTransform: 'uppercase',
+    whiteSpace: 'nowrap',
   },
   nav: {
-    padding: '20px 0',
+    flex: 1,
+    padding: '16px 12px',
+    overflowY: 'auto',
   },
   navItem: {
     display: 'flex',
     alignItems: 'center',
-    gap: '12px',
-    padding: '12px 20px',
-    color: 'rgba(255,255,255,0.7)',
+    gap: '14px',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    color: 'rgba(255,255,255,0.65)',
     textDecoration: 'none',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     fontSize: '14px',
+    fontWeight: '500',
+    position: 'relative',
+    marginBottom: '2px',
   },
   navItemActive: {
-    background: 'var(--color-primary)',
-    color: '#fff',
-    borderLeft: '4px solid var(--color-secondary)',
+    background: 'rgba(2, 125, 255, 0.15)',
+    color: '#ffffff',
+  },
+  navIcon: {
+    flexShrink: 0,
+    opacity: 0.8,
+  },
+  navLabel: {
+    flex: 1,
+    fontSize: '14px',
+    fontWeight: '500',
+  },
+  activeIndicator: {
+    width: '4px',
+    height: '24px',
+    background: '#027DFF',
+    borderRadius: '4px',
+    flexShrink: 0,
+  },
+  footer: {
+    padding: '16px 20px 18px 20px',
+    borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  footerItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: '12px',
+    textDecoration: 'none',
+    transition: 'color 0.2s ease',
+    cursor: 'pointer',
+    padding: '2px 0',
+  },
+  footerIcon: {
+    flexShrink: 0,
+    opacity: 0.6,
+  },
+  footerText: {
+    fontSize: '12px',
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.5)',
+    transition: 'color 0.2s ease',
+  },
+  footerDivider: {
+    borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+    margin: '4px 0 6px 0',
+  },
+  copyright: {
+    fontSize: '11px',
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.3)',
+    textAlign: 'center',
+  },
+  version: {
+    fontSize: '10px',
+    fontWeight: '400',
+    color: 'rgba(255,255,255,0.2)',
+    textAlign: 'center',
   },
 };
 

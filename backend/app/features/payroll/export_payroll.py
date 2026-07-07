@@ -1,9 +1,8 @@
 from io import BytesIO
+
 from fastapi.responses import StreamingResponse
+
 from openpyxl import Workbook
-from app.db.mongo import get_db_conn
-from app.db.collections import collections
-from app.logging_config import logger
 from openpyxl.styles import (
     Font,
     PatternFill,
@@ -11,24 +10,38 @@ from openpyxl.styles import (
     Side,
     Alignment
 )
-
 from openpyxl.utils import get_column_letter
+
+from app.db.mongo import get_db_conn
+from app.db.collections import collections
+from app.logging_config import logger
+
 
 async def export_salary_sheet(
     month: int,
     year: int
 ):
     try:
+
         db = await get_db_conn()
-        payrolls = await db[collections.PAYROLL].find(
+
+        payrolls = await db[
+            collections.PAYROLL
+        ].find(
             {
                 "month": month,
                 "year": year
             }
         ).to_list(length=None)
+
         if not payrolls:
-            raise ValueError("No payroll records found")
-        payroll_summary = await db[collections.PAYROLL_SUMMARY].find_one(
+            raise ValueError(
+                "No payroll records found"
+            )
+
+        payroll_summary = await db[
+            collections.PAYROLL_SUMMARY
+        ].find_one(
             {
                 "month": month,
                 "year": year
@@ -36,12 +49,24 @@ async def export_salary_sheet(
         )
 
         if not payroll_summary:
-            raise ValueError("Payroll summary not found")
+            raise ValueError(
+                "Payroll summary not found"
+            )
 
-        # Create Workbook 
+        # =========================
+        # Create Workbook
+        # =========================
+
         workbook = Workbook()
+
         worksheet = workbook.active
+
         worksheet.title = "Payroll"
+
+        # =========================
+        # Headers
+        # =========================
+
         headers = [
             "Employee No",
             "Employee Name",
@@ -69,9 +94,11 @@ async def export_salary_sheet(
             "Final Salary",
             "Salary Received"
         ]
+
         worksheet.append(headers)
+
         # =========================
-        # Header Styling
+        # Styles
         # =========================
 
         header_fill = PatternFill(
@@ -92,86 +119,31 @@ async def export_salary_sheet(
             bottom=Side(style="thin")
         )
 
+        center_alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+        # =========================
+        # Header Styling
+        # =========================
+
         for cell in worksheet[1]:
 
             cell.fill = header_fill
             cell.font = header_font
             cell.border = thin_border
-            cell.alignment = Alignment(
-                horizontal="center",
-                vertical="center"
-            )
+            cell.alignment = center_alignment
 
-        # Freeze Header Row
+        # Freeze Header
 
         worksheet.freeze_panes = "A2"
 
+        # =========================
         # Employee Payroll Records
+        # =========================
+
         for payroll in payrolls:
-           
-            for row in worksheet.iter_rows(
-                min_row=2,
-                max_row=worksheet.max_row
-            ):
-
-                for cell in row:
-
-                    cell.border = thin_border
-
-                    cell.alignment = Alignment(
-                        horizontal="center",
-                        vertical="center"
-                    )
-
-            # =========================
-            # Currency Formatting
-            # =========================
-
-            currency_columns = [
-                6,   # Monthly Salary
-                7,   # Per Day Salary
-                16,  # Leave Deduction
-                18,  # Late Deduction
-                20,  # Half Day Deduction
-                21,  # Bonus
-                22,  # Loan Deduction
-                23,  # Total Deductions
-                24   # Final Salary
-            ]
-
-            for col in currency_columns:
-
-                for cell in worksheet.iter_cols(
-                    min_col=col,
-                    max_col=col,
-                    min_row=2,
-                    max_row=worksheet.max_row
-                ):
-
-                    for c in cell:
-
-                        c.number_format = '#,##0.00'
-
-            # =========================
-            # Auto Adjust Column Width
-            # =========================
-
-            for column_cells in worksheet.columns:
-
-                length = max(
-                    len(str(cell.value))
-                    if cell.value is not None
-                    else 0
-                    for cell in column_cells
-                )
-
-                worksheet.column_dimensions[
-                    get_column_letter(
-                        column_cells[0].column
-                    )
-                ].width = length + 5
-
-
 
             total_deductions = (
                 payroll.get(
@@ -212,34 +184,88 @@ async def export_salary_sheet(
                     payroll.get("late_count"),
                     payroll.get("late_deduction"),
                     payroll.get("half_days"),
-                    payroll.get("half_days_override"),
                     payroll.get("half_day_deduction"),
+                    payroll.get("half_days_override"),
                     payroll.get("bonus"),
                     payroll.get("loan_deduction"),
                     total_deductions,
                     payroll.get("final_salary"),
-                    "Yes"
-                    if payroll.get(
-                        "salary_received"
+                    (
+                        "Yes"
+                        if payroll.get(
+                            "salary_received"
+                        )
+                        else "No"
                     )
-                    else "No"
                 ]
             )
+
+            # =========================
+            # Style Current Row
+            # =========================
+
+            current_row = worksheet.max_row
+
+            for cell in worksheet[current_row]:
+
+                cell.border = thin_border
+                cell.alignment = center_alignment
+
+        # =========================
+        # Currency Formatting
+        # =========================
+
+        currency_columns = [
+            6,   # Monthly Salary
+            7,   # Per Day Salary
+            15,  # Leave Deduction
+            17,  # Late Deduction
+            19,  # Half Day Deduction
+            21,  # Bonus
+            22,  # Loan Deduction
+            23,  # Total Deductions
+            24   # Final Salary
+        ]
+
+        for col in currency_columns:
+
+            for column_cells in worksheet.iter_cols(
+                min_col=col,
+                max_col=col,
+                min_row=2,
+                max_row=worksheet.max_row
+            ):
+
+                for cell in column_cells:
+
+                    cell.number_format = (
+                        '#,##0.00'
+                    )
+
+        # =========================
         # Payroll Summary
+        # =========================
+
         worksheet.append([])
-        worksheet.append(["Payroll Summary"])
+
+        worksheet.append(
+            ["Payroll Summary"]
+        )
+
         worksheet.append(
             [
                 "Month",
                 payroll_summary.get("month")
             ]
         )
+
         worksheet.append(
             [
                 "Year",
                 payroll_summary.get("year")
             ]
         )
+
         worksheet.append(
             [
                 "Total Employees Processed",
@@ -248,6 +274,7 @@ async def export_salary_sheet(
                 )
             ]
         )
+
         worksheet.append(
             [
                 "Total Gross Salary",
@@ -256,6 +283,7 @@ async def export_salary_sheet(
                 )
             ]
         )
+
         worksheet.append(
             [
                 "Total Deductions",
@@ -264,6 +292,7 @@ async def export_salary_sheet(
                 )
             ]
         )
+
         worksheet.append(
             [
                 "Total Net Payroll",
@@ -272,27 +301,43 @@ async def export_salary_sheet(
                 )
             ]
         )
+
         worksheet.append(
             [
-                "Total Amount Required For Salary Disbursement",
+                (
+                    "Total Amount Required "
+                    "For Salary Disbursement"
+                ),
                 payroll_summary.get(
                     "total_amount_required_for_salary_disbursement"
                 )
             ]
         )
-        
+
         # =========================
         # Payroll Summary Styling
         # =========================
 
-        summary_row = worksheet.max_row - 6
+        summary_start_row = (
+            worksheet.max_row - 6
+        )
 
-        for row in range(summary_row, worksheet.max_row + 1):
+        for row in range(
+            summary_start_row,
+            worksheet.max_row + 1
+        ):
+
+            for cell in worksheet[row]:
+
+                cell.border = thin_border
+                cell.alignment = center_alignment
 
             worksheet.cell(
                 row=row,
                 column=1
-            ).font = Font(bold=True)
+            ).font = Font(
+                bold=True
+            )
 
             worksheet.cell(
                 row=row,
@@ -303,10 +348,35 @@ async def export_salary_sheet(
                 fill_type="solid"
             )
 
-        # Return Excel File
+        # =========================
+        # Auto Adjust Column Width
+        # =========================
+
+        for column_cells in worksheet.columns:
+
+            length = max(
+                len(str(cell.value))
+                if cell.value is not None
+                else 0
+                for cell in column_cells
+            )
+
+            worksheet.column_dimensions[
+                get_column_letter(
+                    column_cells[0].column
+                )
+            ].width = length + 5
+
+        # =========================
+        # Save Workbook
+        # =========================
+
         excel_file = BytesIO()
+
         workbook.save(excel_file)
+
         excel_file.seek(0)
+
         return StreamingResponse(
             excel_file,
             media_type=(
@@ -323,6 +393,12 @@ async def export_salary_sheet(
                 )
             }
         )
+
     except Exception as e:
-        logger.exception(f"Error exporting salary sheet: {str(e)}")
+
+        logger.exception(
+            f"Error exporting salary sheet: "
+            f"{str(e)}"
+        )
+
         raise

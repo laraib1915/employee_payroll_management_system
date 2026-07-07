@@ -74,13 +74,16 @@ const Settings = () => {
   if (loading) return <LoadingSpinner size="large" />;
 
   return (
-    <div>
-      <h2>System Settings</h2>
-      <p style={{ color: 'var(--text-light)', marginBottom: '30px' }}>
-        Configure payroll and attendance system parameters
-      </p>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.pageTitle}>System Settings</h1>
+          <p style={styles.pageSubtitle}>Configure payroll and attendance system parameters</p>
+        </div>
+      </div>
 
       <div style={styles.card}>
+        <h3 style={styles.cardTitle}>Payroll Settings</h3>
         <form onSubmit={handleSubmit}>
           <div style={styles.grid}>
             <div style={styles.formGroup}>
@@ -98,7 +101,7 @@ const Settings = () => {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Full-Time Annual Leave Allocation</label>
+              <label style={styles.label}>Full-Time Annual Leave</label>
               <input
                 type="number"
                 name="full_time_annual_leave_allocation"
@@ -112,7 +115,7 @@ const Settings = () => {
             </div>
 
             <div style={styles.formGroup}>
-              <label style={styles.label}>Intern Annual Leave Allocation</label>
+              <label style={styles.label}>Intern Annual Leave</label>
               <input
                 type="number"
                 name="intern_annual_leave_allocation"
@@ -197,13 +200,13 @@ const Settings = () => {
       </div>
 
       <div style={styles.infoCard}>
-        <h4>Payroll Rules Summary</h4>
+        <h4 style={styles.infoTitle}>📋 Payroll Rules Summary</h4>
         <ul style={styles.rulesList}>
           <li><strong>Working Days:</strong> {settings.working_days_per_month} days per month</li>
-          <li><strong>Full-Time Leaves:</strong> {settings.full_time_annual_leave_allocation} annual leaves + {settings.monthly_leave_allocation} monthly leave</li>
-          <li><strong>Intern Leaves:</strong> {settings.intern_annual_leave_allocation} annual leaves + {settings.monthly_leave_allocation} monthly leave</li>
-          <li><strong>Late Arrivals:</strong> First {settings.allowed_late_arrivals} ignored, then {settings.late_deduction_rate * 100}% day deduction each</li>
-          <li><strong>Half Day:</strong> Less than {settings.half_day_threshold_hours} hours worked = 0.5 day deduction</li>
+          <li><strong>Full-Time Leaves:</strong> {settings.full_time_annual_leave_allocation} annual + {settings.monthly_leave_allocation} monthly</li>
+          <li><strong>Intern Leaves:</strong> {settings.intern_annual_leave_allocation} annual + {settings.monthly_leave_allocation} monthly</li>
+          <li><strong>Late Arrivals:</strong> First {settings.allowed_late_arrivals} ignored, then {settings.late_deduction_rate * 100}% day deduction</li>
+          <li><strong>Half Day:</strong> Less than {settings.half_day_threshold_hours} hours = 0.5 day deduction</li>
         </ul>
       </div>
     </div>
@@ -211,12 +214,42 @@ const Settings = () => {
 };
 
 const styles = {
+  container: {
+    maxWidth: '1000px',
+    margin: '0 auto',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '30px',
+    flexWrap: 'wrap',
+    gap: '15px',
+  },
+  pageTitle: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    margin: '0 0 6px 0',
+  },
+  pageSubtitle: {
+    fontSize: '15px',
+    color: '#6b7280',
+    margin: 0,
+  },
   card: {
-    background: '#fff',
-    padding: '20px',
-    borderRadius: 'var(--radius)',
-    boxShadow: 'var(--box-shadow)',
-    marginBottom: '20px',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '28px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+    border: '1px solid #f0f0f0',
+    marginBottom: '24px',
+  },
+  cardTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    margin: '0 0 20px 0',
   },
   grid: {
     display: 'grid',
@@ -226,67 +259,79 @@ const styles = {
   formGroup: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '5px',
+    gap: '6px',
   },
   label: {
-    fontWeight: 'var(--font-medium)',
-    fontSize: 'var(--font-sm)',
-    color: 'var(--text-light)',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#4b5563',
   },
   input: {
-    padding: '10px',
-    border: '1px solid var(--grey-border)',
-    borderRadius: 'var(--radius)',
-    fontSize: 'var(--font-sm)',
-    transition: 'all 0.3s ease',
+    padding: '10px 14px',
+    border: '1px solid #e5e7eb',
+    borderRadius: '8px',
+    fontSize: '14px',
+    color: '#1a1a2e',
+    fontFamily: 'inherit',
+    outline: 'none',
+    transition: 'border-color 0.2s ease',
+    backgroundColor: '#ffffff',
   },
   helpText: {
-    color: 'var(--text-light)',
-    fontSize: 'var(--font-xs)',
+    fontSize: '12px',
+    color: '#9ca3af',
+    marginTop: '2px',
   },
   buttonGroup: {
     display: 'flex',
-    gap: '10px',
-    marginTop: '20px',
+    gap: '12px',
+    marginTop: '24px',
   },
   saveButton: {
-    padding: '12px 24px',
-    background: 'var(--color-primary)',
-    color: '#fff',
+    padding: '12px 28px',
+    background: '#027DFF',
+    color: '#ffffff',
     border: 'none',
-    borderRadius: 'var(--radius)',
-    fontSize: 'var(--font-sm)',
-    fontWeight: 'var(--font-medium)',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
   },
   resetButton: {
     padding: '12px 24px',
-    background: 'var(--color-light)',
-    color: 'var(--text-light)',
-    border: '1px solid var(--grey-border)',
-    borderRadius: 'var(--radius)',
-    fontSize: 'var(--font-sm)',
-    fontWeight: 'var(--font-medium)',
+    background: '#f3f4f6',
+    color: '#4b5563',
+    border: '1px solid #e5e7eb',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: '500',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     display: 'inline-flex',
     alignItems: 'center',
     gap: '8px',
   },
   infoCard: {
-    background: '#fff',
-    padding: '20px',
-    borderRadius: 'var(--radius)',
-    boxShadow: 'var(--box-shadow)',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '24px 28px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+    border: '1px solid #f0f0f0',
+  },
+  infoTitle: {
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    margin: '0 0 12px 0',
   },
   rulesList: {
     listStyle: 'none',
     padding: 0,
-    marginTop: '10px',
+    margin: 0,
   },
 };
 

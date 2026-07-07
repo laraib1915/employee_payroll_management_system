@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { attendanceApi } from '../api/attendanceApi';
 import { useNotification } from '../hooks/useNotification';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { FiUpload, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiUpload, FiCheckCircle, FiAlertCircle, FiFile, FiX, FiInfo } from 'react-icons/fi';
 
 const Attendance = () => {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState(null);
   const { showSuccess, showError } = useNotification();
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -36,11 +37,14 @@ const Attendance = () => {
     setUploading(true);
     try {
       const response = await attendanceApi.uploadAttendance(file);
-      console.log('Upload response:', response); // Debug log
+      console.log('Upload response:', response);
       setResult(response);
       showSuccess('Attendance uploaded successfully!');
       setFile(null);
-      document.getElementById('fileInput').value = '';
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Upload error:', error);
       const errorData = error.response?.data;
@@ -51,13 +55,19 @@ const Attendance = () => {
     }
   };
 
-  // Helper function to render errors properly
+  const handleRemoveFile = () => {
+    setFile(null);
+    setResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const renderErrors = (errors) => {
     if (!errors) return null;
     if (!Array.isArray(errors)) return null;
     
     return errors.map((err, index) => {
-      // If error is an object with error field
       if (typeof err === 'object' && err !== null) {
         const errorMessage = err.error || err.message || JSON.stringify(err);
         const employeeInfo = err.row_employee_no || err.row_employee_name || '';
@@ -68,85 +78,106 @@ const Attendance = () => {
           </li>
         );
       }
-      // If error is a string
       return <li key={index}>{String(err)}</li>;
     });
   };
 
   return (
-    <div>
-      <h2>Attendance Management</h2>
-      <p style={{ color: 'var(--text-light)', marginBottom: '30px' }}>
-        Upload monthly attendance sheets in Excel format
-      </p>
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div>
+          <h1 style={styles.pageTitle}>Attendance Management</h1>
+          <p style={styles.pageSubtitle}>Upload and process monthly attendance sheets</p>
+        </div>
+      </div>
 
       <div style={styles.card}>
+        <h3 style={styles.cardTitle}>Upload Attendance Sheet</h3>
+        <p style={styles.cardSubtitle}>Upload employee attendance in Excel format (.xlsx, .xls)</p>
+
         <div style={styles.uploadArea}>
-          <div style={styles.uploadBox}>
-            <FiUpload size={48} style={styles.uploadIcon} />
-            <h3>Upload Attendance Sheet</h3>
-            <p style={styles.uploadText}>
-              Supported formats: .xlsx, .xls
-            </p>
-            <input
-              id="fileInput"
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileChange}
-              style={styles.fileInput}
-            />
-            {file && (
-              <div style={styles.fileInfo}>
-                <FiCheckCircle style={{ color: 'var(--color-success)' }} />
-                <span>{file.name}</span>
-                <span style={styles.fileSize}>
-                  ({(file.size / 1024).toFixed(2)} KB)
-                </span>
-              </div>
+          <div style={styles.dropZone}>
+            <FiFile size={40} style={styles.dropIcon} />
+            <div style={styles.dropContent}>
+              <p style={styles.dropTitle}>
+                {file ? file.name : 'Drag & drop your file here'}
+              </p>
+              <p style={styles.dropSubtext}>
+                {file 
+                  ? `Size: ${(file.size / 1024).toFixed(2)} KB` 
+                  : 'or click to browse'
+                }
+              </p>
+            </div>
+            
+            {file ? (
+              <button onClick={handleRemoveFile} style={styles.removeButton}>
+                <FiX size={16} />
+                Remove
+              </button>
+            ) : (
+              <label style={styles.browseButton}>
+                Browse Files
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  style={styles.hiddenInput}
+                />
+              </label>
             )}
-            <button
-              onClick={handleUpload}
-              disabled={!file || uploading}
-              style={{
-                ...styles.uploadButton,
-                ...(!file || uploading ? styles.uploadButtonDisabled : {}),
-              }}
-            >
-              {uploading ? 'Uploading...' : 'Upload Attendance'}
-            </button>
           </div>
-        </div>
 
-        {uploading && <LoadingSpinner size="medium" />}
+          <button
+            onClick={handleUpload}
+            disabled={!file || uploading}
+            style={{
+              ...styles.uploadButton,
+              ...(!file || uploading ? styles.uploadButtonDisabled : {})
+            }}
+          >
+            {uploading ? 'Uploading...' : 'Upload Attendance'}
+          </button>
 
-        {result && (
-          <div style={styles.resultContainer}>
+          {uploading && (
+            <div style={styles.loadingContainer}>
+              <LoadingSpinner size="small" />
+              <span style={styles.loadingText}>Processing your file...</span>
+            </div>
+          )}
+
+          {result && (
             <div style={{
               ...styles.resultBox,
-              ...(result.success !== false ? styles.resultSuccess : styles.resultError),
+              ...(result.success !== false ? styles.resultSuccess : styles.resultError)
             }}>
               <div style={styles.resultIcon}>
                 {result.success !== false ? (
-                  <FiCheckCircle size={24} style={{ color: 'var(--color-success)' }} />
+                  <FiCheckCircle size={20} style={{ color: '#13a835' }} />
                 ) : (
-                  <FiAlertCircle size={24} style={{ color: 'var(--color-danger)' }} />
+                  <FiAlertCircle size={20} style={{ color: '#dc2626' }} />
                 )}
               </div>
               <div style={styles.resultContent}>
-                <h4 style={{ margin: '0 0 8px 0' }}>
+                <h4 style={styles.resultTitle}>
                   {result.success !== false ? 'Upload Successful' : 'Upload Failed'}
                 </h4>
-                <p style={{ margin: '0 0 10px 0' }}>
+                <p style={styles.resultMessage}>
                   {result.message || 'Attendance processed successfully'}
                 </p>
                 {result.data && (
                   <div style={styles.resultDetails}>
-                    <span>Processed: {result.data.processed || 0} records</span>
+                    <span style={styles.resultBadge}>
+                      Processed: {result.data.processed || 0} records
+                    </span>
                     {result.data.total && (
-                      <span> | Total: {result.data.total} records</span>
+                      <span style={styles.resultBadge}>
+                        Total: {result.data.total} records
+                      </span>
                     )}
                     {result.data.errors && result.data.errors.length > 0 && (
-                      <div style={styles.errors}>
+                      <div style={styles.errorContainer}>
                         <strong>Errors ({result.data.errors.length}):</strong>
                         <ul style={styles.errorList}>
                           {renderErrors(result.data.errors)}
@@ -156,7 +187,7 @@ const Attendance = () => {
                   </div>
                 )}
                 {result.errors && result.errors.length > 0 && (
-                  <div style={styles.errors}>
+                  <div style={styles.errorContainer}>
                     <strong>Errors ({result.errors.length}):</strong>
                     <ul style={styles.errorList}>
                       {renderErrors(result.errors)}
@@ -165,120 +196,210 @@ const Attendance = () => {
                 )}
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div style={styles.infoCard}>
-        <h4>Required Excel Columns:</h4>
-        <ul style={styles.columnList}>
-          <li><strong>Emp No.</strong> - Employee number</li>
-          <li><strong>No.</strong> - Serial number (optional)</li>
-          <li><strong>Name</strong> - Employee name</li>
-          <li><strong>Date</strong> - Attendance date</li>
-          <li><strong>On duty</strong> - Scheduled start time</li>
-          <li><strong>Off duty</strong> - Scheduled end time</li>
-          <li><strong>Clock In</strong> - Actual check-in time</li>
-          <li><strong>Clock Out</strong> - Actual check-out time</li>
-          <li><strong>Late</strong> - Late arrival minutes</li>
-          <li><strong>Early</strong> - Early departure minutes</li>
-          <li><strong>Absent</strong> - Absent flag</li>
-          <li><strong>OT Time</strong> - Overtime hours</li>
-          <li><strong>NDays_OT</strong> - Normal days OT</li>
-          <li><strong>WeekEnd_OT</strong> - Weekend OT</li>
-          <li><strong>Holiday_OT</strong> - Holiday OT</li>
-        </ul>
+        <h3 style={styles.cardTitle}>
+          <FiInfo size={18} style={styles.infoIcon} />
+          Required Excel Columns
+        </h3>
+        
+        <div style={styles.columnsContainer}>
+          <div style={styles.columnGroup}>
+            <h4 style={styles.columnTitle}>Required Columns</h4>
+            <ul style={styles.columnList}>
+              <li><span style={styles.columnBadge}>Emp No.</span> Employee number</li>
+              <li><span style={styles.columnBadge}>Name</span> Employee name</li>
+              <li><span style={styles.columnBadge}>Date</span> Attendance date</li>
+              <li><span style={styles.columnBadge}>Clock In</span> Actual check-in time</li>
+              <li><span style={styles.columnBadge}>Clock Out</span> Actual check-out time</li>
+            </ul>
+          </div>
+          
+          <div style={styles.columnGroup}>
+            <h4 style={styles.columnTitle}>Optional Columns</h4>
+            <ul style={styles.columnList}>
+              <li><span style={styles.columnBadge}>No.</span> Serial number</li>
+              <li><span style={styles.columnBadge}>On duty</span> Scheduled start</li>
+              <li><span style={styles.columnBadge}>Off duty</span> Scheduled end</li>
+              <li><span style={styles.columnBadge}>Late</span> Late arrival</li>
+              <li><span style={styles.columnBadge}>Early</span> Early departure</li>
+              <li><span style={styles.columnBadge}>Absent</span> Absent flag</li>
+              <li><span style={styles.columnBadge}>OT Time</span> Overtime hours</li>
+              <li><span style={styles.columnBadge}>NDays_OT</span> Normal days OT</li>
+              <li><span style={styles.columnBadge}>WeekEnd_OT</span> Weekend OT</li>
+              <li><span style={styles.columnBadge}>Holiday_OT</span> Holiday OT</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 const styles = {
+  container: {
+    maxWidth: '900px',
+    margin: '0 auto',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: '30px',
+    flexWrap: 'wrap',
+    gap: '15px',
+  },
+  pageTitle: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: '#1a1a2e',
+    margin: '0 0 6px 0',
+  },
+  pageSubtitle: {
+    fontSize: '15px',
+    color: '#6b7280',
+    margin: 0,
+  },
   card: {
-    background: '#fff',
-    padding: '30px',
-    borderRadius: 'var(--radius)',
-    boxShadow: 'var(--box-shadow)',
-    marginBottom: '20px',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    padding: '28px',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+    border: '1px solid #f0f0f0',
+    marginBottom: '24px',
+  },
+  cardTitle: {
+    fontSize: '18px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    margin: '0 0 6px 0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  cardSubtitle: {
+    fontSize: '14px',
+    color: '#6b7280',
+    margin: '0 0 20px 0',
+  },
+  infoIcon: {
+    color: '#027DFF',
   },
   uploadArea: {
+    width: '100%',
+  },
+  dropZone: {
+    border: '2px dashed #e5e7eb',
+    borderRadius: '10px',
+    padding: '30px',
     display: 'flex',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: '20px',
+    flexWrap: 'wrap',
+    backgroundColor: '#fafafa',
+    transition: 'all 0.2s ease',
+    marginBottom: '16px',
   },
-  uploadBox: {
-    textAlign: 'center',
-    padding: '40px',
-    border: '2px dashed var(--grey-border)',
-    borderRadius: 'var(--radius)',
-    width: '100%',
-    maxWidth: '500px',
-    transition: 'all 0.3s ease',
+  dropIcon: {
+    color: '#9ca3af',
+    flexShrink: 0,
   },
-  uploadIcon: {
-    color: 'var(--color-primary)',
-    marginBottom: '15px',
+  dropContent: {
+    flex: 1,
+    minWidth: '150px',
   },
-  uploadText: {
-    color: 'var(--text-light)',
-    marginBottom: '15px',
+  dropTitle: {
+    fontSize: '15px',
+    fontWeight: '500',
+    color: '#1a1a2e',
+    margin: '0 0 4px 0',
   },
-  fileInput: {
-    display: 'block',
-    margin: '15px auto',
-    padding: '10px',
-    border: '1px solid var(--grey-border)',
-    borderRadius: 'var(--radius)',
-    width: '100%',
+  dropSubtext: {
+    fontSize: '13px',
+    color: '#9ca3af',
+    margin: 0,
+  },
+  removeButton: {
+    padding: '6px 14px',
+    background: '#fef2f2',
+    color: '#dc2626',
+    border: '1px solid #fecaca',
+    borderRadius: '8px',
     cursor: 'pointer',
-  },
-  fileInfo: {
+    fontSize: '13px',
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    padding: '10px',
-    background: 'var(--color-primary-light)',
-    borderRadius: 'var(--radius)',
-    margin: '10px 0',
+    gap: '4px',
+    transition: 'all 0.2s ease',
+    flexShrink: 0,
   },
-  fileSize: {
-    color: 'var(--text-light)',
-    fontSize: 'var(--font-xs)',
+  browseButton: {
+    padding: '8px 20px',
+    background: '#027DFF',
+    color: '#ffffff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: '500',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '8px',
+    transition: 'all 0.2s ease',
+    flexShrink: 0,
+  },
+  hiddenInput: {
+    display: 'none',
   },
   uploadButton: {
-    padding: '12px 30px',
-    background: 'var(--color-primary)',
-    color: '#fff',
+    width: '100%',
+    padding: '12px',
+    background: '#027DFF',
+    color: '#ffffff',
     border: 'none',
-    borderRadius: 'var(--radius)',
-    fontSize: 'var(--font-md)',
-    fontWeight: 'var(--font-medium)',
+    borderRadius: '10px',
+    fontSize: '15px',
+    fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    marginTop: '15px',
+    transition: 'all 0.2s ease',
   },
   uploadButtonDisabled: {
     opacity: 0.5,
     cursor: 'not-allowed',
   },
-  resultContainer: {
-    marginTop: '20px',
+  loadingContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '12px',
+    marginTop: '12px',
+    padding: '12px',
+    backgroundColor: '#f8f9fc',
+    borderRadius: '8px',
+  },
+  loadingText: {
+    fontSize: '14px',
+    color: '#6b7280',
   },
   resultBox: {
-    padding: '20px',
-    borderRadius: 'var(--radius)',
+    marginTop: '16px',
+    padding: '16px',
+    borderRadius: '10px',
     display: 'flex',
-    gap: '15px',
+    gap: '12px',
     alignItems: 'flex-start',
   },
   resultSuccess: {
-    background: 'var(--payroll-success-bg)',
-    border: '1px solid var(--color-success)',
+    backgroundColor: 'rgba(19, 168, 53, 0.08)',
+    border: '1px solid #bbf7d0',
   },
   resultError: {
-    background: 'var(--payroll-danger-bg)',
-    border: '1px solid var(--color-danger)',
+    backgroundColor: 'rgba(220, 38, 38, 0.08)',
+    border: '1px solid #fecaca',
   },
   resultIcon: {
     marginTop: '2px',
@@ -287,32 +408,76 @@ const styles = {
   resultContent: {
     flex: 1,
   },
-  resultDetails: {
-    marginTop: '10px',
+  resultTitle: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: '#1a1a2e',
+    margin: '0 0 4px 0',
   },
-  errors: {
+  resultMessage: {
+    fontSize: '14px',
+    color: '#4b5563',
+    margin: '0 0 8px 0',
+  },
+  resultDetails: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '8px',
+    marginTop: '4px',
+  },
+  resultBadge: {
+    display: 'inline-block',
+    padding: '2px 12px',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: '20px',
+    fontSize: '13px',
+    color: '#4b5563',
+  },
+  errorContainer: {
     marginTop: '10px',
     padding: '10px',
-    background: '#fff',
-    borderRadius: 'var(--radius)',
-    border: '1px solid var(--color-danger)',
+    backgroundColor: '#ffffff',
+    borderRadius: '6px',
+    width: '100%',
+    border: '1px solid #fecaca',
   },
   errorList: {
-    margin: '5px 0 0 0',
+    margin: '6px 0 0 0',
     paddingLeft: '20px',
-    color: 'var(--color-danger)',
+    color: '#dc2626',
+    fontSize: '13px',
   },
-  infoCard: {
-    background: '#fff',
-    padding: '20px',
-    borderRadius: 'var(--radius)',
-    boxShadow: 'var(--box-shadow)',
+  columnsContainer: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: '30px',
+    marginTop: '16px',
+  },
+  columnGroup: {},
+  columnTitle: {
+    fontSize: '13px',
+    fontWeight: '600',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    margin: '0 0 10px 0',
   },
   columnList: {
-    columns: '2',
-    columnGap: '30px',
     listStyle: 'none',
     padding: 0,
+    margin: 0,
+  },
+  columnBadge: {
+    display: 'inline-block',
+    padding: '2px 10px',
+    backgroundColor: '#f3f4f6',
+    borderRadius: '4px',
+    fontSize: '12px',
+    fontWeight: '600',
+    color: '#4b5563',
+    marginRight: '8px',
+    fontFamily: 'monospace',
+    minWidth: '70px',
   },
 };
 
