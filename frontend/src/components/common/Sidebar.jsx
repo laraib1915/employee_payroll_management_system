@@ -28,7 +28,7 @@ const Sidebar = () => {
         <Link to="/dashboard" style={styles.logoLink}>
           <div style={styles.logoContainer}>
             <img 
-              src="/system-heuristics-og.png" 
+              src="/assets/system-heuristics-og.png" 
               alt="System Heuristics" 
               style={styles.logoImage}
             />

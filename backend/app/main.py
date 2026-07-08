@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 from app.routes.employee_router import (
     router as employee_router
@@ -51,6 +53,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/assets", StaticFiles(directory="app/static/assets"), name="assets")
 
 app.include_router(employee_router)
 app.include_router(attendence_router)
@@ -58,9 +61,5 @@ app.include_router(payroll_router)
 app.include_router(settings_router)
 
 @app.get("/")
-async def root():
-
-    return {
-        "message":
-        "FastAPI and MongoDB is running"
-    }
+async def serve_frontend():
+    return FileResponse("app/static/index.html")

@@ -39,7 +39,7 @@ const Landing = () => {
         <div style={styles.content}>
           <div style={styles.logoSection}>
             <img 
-              src="/system-heuristics-og.png" 
+              src="/assets/system-heuristics-og.png" 
               alt="System Heuristics" 
               style={styles.logoImage}
             />
