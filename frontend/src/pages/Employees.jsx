@@ -140,7 +140,7 @@ const styles = {
     alignItems: 'center',
     gap: '8px',
     padding: '10px 24px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',

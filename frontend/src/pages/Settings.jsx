@@ -289,7 +289,7 @@ const styles = {
   },
   saveButton: {
     padding: '12px 28px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',

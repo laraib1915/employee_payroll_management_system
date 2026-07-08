@@ -17,6 +17,80 @@ const Payroll = () => {
 
   const [overrides, setOverrides] = useState([]);
 
+  // Helper function to extract meaningful error message
+  const getErrorMessage = (error) => {
+    console.error('Full error:', error);
+    
+    // If error is a string, use it directly
+    if (typeof error === 'string') {
+      return error;
+    }
+    
+    // If error has a message property
+    if (error && error.message) {
+      return error.message;
+    }
+    
+    // Check if error response exists
+    if (error && error.response) {
+      const { status, data } = error.response;
+      
+      // Handle 500 errors specifically
+      if (status === 500) {
+        if (data && data.message) {
+          return data.message;
+        }
+        if (data && data.error) {
+          return data.error;
+        }
+        if (data && data.detail) {
+          return data.detail;
+        }
+        return 'The server encountered an issue. Please check if attendance data exists for the selected month or contact support.';
+      }
+      
+      // Handle other status codes
+      if (status === 404) {
+        return 'No attendance records found for the selected month. Please upload attendance data first.';
+      }
+      
+      if (status === 403) {
+        return 'You do not have permission to perform this action.';
+      }
+      
+      if (status === 400) {
+        if (data && data.message) {
+          return data.message;
+        }
+        if (data && data.error) {
+          return data.error;
+        }
+        return 'Invalid request. Please check your input and try again.';
+      }
+      
+      // If we have a data object with message
+      if (data) {
+        if (data.message) return data.message;
+        if (data.error) return data.error;
+        if (data.detail) return data.detail;
+        
+        // If data is an array of errors (validation errors)
+        if (Array.isArray(data)) {
+          return data.map(err => err.msg || err.message || err).join(', ');
+        }
+      }
+      
+      return `Server error (${status}). Please try again later.`;
+    }
+    
+    // Network errors (no response)
+    if (error && error.request) {
+      return 'Network error: Unable to reach the server. Please check your internet connection.';
+    }
+    
+    return 'An unexpected error occurred. Please try again.';
+  };
+
   const handleGenerateAndDownload = async () => {
     setLoading(true);
     try {
@@ -43,8 +117,8 @@ const Payroll = () => {
       setOverrides([]);
       
     } catch (error) {
-      console.error('Error generating payroll:', error);
-      showError(error.response?.data?.message || 'Failed to generate payroll');
+      const errorMessage = getErrorMessage(error);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -53,7 +127,11 @@ const Payroll = () => {
   const handleExport = async () => {
     setExportLoading(true);
     try {
+      // This will throw if there's an error (JSON response)
       const blob = await payrollApi.exportSalarySheet(formData.month, formData.year);
+      
+      // If we get here, we have a valid blob
+      // Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -61,9 +139,29 @@ const Payroll = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+      
     } catch (error) {
-      console.error('Export error:', error);
+      // Error is already handled in the API layer, but we'll show it again if needed
+      const errorMessage = getErrorMessage(error);
+      
+      // Check for specific error types
+      const lowerMessage = errorMessage.toLowerCase();
+      if (lowerMessage.includes('no attendance') || 
+          lowerMessage.includes('no data') ||
+          lowerMessage.includes('no records') ||
+          lowerMessage.includes('not found') ||
+          lowerMessage.includes('404')) {
+        showError(`No attendance records found for ${MONTHS.find(m => m.value === formData.month)?.label} ${formData.year}. Please upload attendance data first.`);
+      } else {
+        showError(errorMessage);
+      }
+      
+      // Re-throw for the calling function to handle
       throw error;
     } finally {
       setExportLoading(false);
@@ -377,7 +475,7 @@ const styles = {
   },
   addOverrideButton: {
     padding: '6px 16px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '8px',
@@ -448,7 +546,7 @@ const styles = {
   },
   generateButton: {
     padding: '12px 28px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',
@@ -461,7 +559,7 @@ const styles = {
   },
   exportButton: {
     padding: '12px 24px',
-    background: '#13a835',
+    background: '#00be2c9d',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',

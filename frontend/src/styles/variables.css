@@ -20,7 +20,7 @@
     --font-medium: 600;
     --font-bold: 700;
 
-    /* Theme */
+    /* theme */
     --bg-dark: #0d1526;
     --bg-light: #14161a;
     --light-grey-bg: #f6f6f6;
@@ -29,19 +29,16 @@
     --text-dark: #000000;
 
     /* Colors */
-    --color-primary: #027DFF;
-    --color-primary-hover: #0067d4;
+    --color-primary: #002b58;
+    --color-primary-hover: #001e3e;
     --color-primary-light: #cde5ff;
-
     --dark-blue-bg: linear-gradient(90deg, #0d1424,#121b31, #142045);
     --glowing-blue-color: linear-gradient(90deg, #00C6FF, #0072FF);
 
-    /* Lime Yellow */
     --color-secondary: #c5e656;
     --color-secondary-hover: #cbff1f;
     --color-secondary-light: #faffec;
 
-    /* Status Colors */
     --color-success: #13a835;
     --color-danger: #ac0011;
     --color-warning: #d6a000;
@@ -61,8 +58,6 @@
     --payroll-success-bg: #e8f5e9;
     --payroll-warning-bg: #fff3e0;
     --payroll-danger-bg: #fbe9e7;
-    
-    /* Status colors */
     --status-active: #4caf50;
     --status-inactive: #f44336;
     --status-pending: #ff9800;

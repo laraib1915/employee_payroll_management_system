@@ -87,7 +87,7 @@ const styles = {
   sidebar: {
     width: '240px',
     height: '100vh',
-    background: 'linear-gradient(180deg, #0d1526 0%, #0a0f1e 100%)',
+    background: 'linear-gradient(180deg, #0d1526 0%, #445482 100%)',
     position: 'fixed',
     left: 0,
     top: 0,

@@ -62,7 +62,7 @@ const styles = {
     width: '38px',
     height: '38px',
     borderRadius: '50%',
-    background: 'linear-gradient(135deg, #027DFF 0%, #0067d4 100%)',
+    background: 'linear-gradient(135deg, #3871ae 0%, #3871ae 100%)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

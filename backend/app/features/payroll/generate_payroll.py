@@ -32,7 +32,9 @@ async def generate_payroll(
         if not attendance_documents:
             return await core_response(
                 status_code=404,
-                message="No attendance records found"
+                message="Attendance record does not exist for the selected month and year. "
+                        "Cannot generate or download payroll. "
+                        "Please add the attendance records."
             )
         generated_payrolls = []
         # Generate Payroll
@@ -45,7 +47,18 @@ async def generate_payroll(
                 continue
             if employee.get("status") != "Active":
                 continue
-
+            
+            joining_date = employee.get("joining_date")
+            if joining_date:
+                if (
+                    joining_date.year > payload.year or
+                        (
+                        joining_date.year == payload.year and
+                        joining_date.month > payload.month
+                    )
+                ):
+                    continue
+                
             # Check Existing Payroll
             existing_payroll = await db[collections.PAYROLL].find_one(
                 {

@@ -339,7 +339,7 @@ const styles = {
   },
   browseButton: {
     padding: '8px 20px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '8px',
@@ -358,7 +358,7 @@ const styles = {
   uploadButton: {
     width: '100%',
     padding: '12px',
-    background: '#027DFF',
+    background: '#3871ae',
     color: '#ffffff',
     border: 'none',
     borderRadius: '10px',
