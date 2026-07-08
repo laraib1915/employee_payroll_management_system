@@ -1,0 +1,10 @@
+fastapi
+motor
+pydantic[email]
+pydantic-settings
+pymongo
+uvicorn
+python-dotenv
+python-multipart
+pandas
+openpyxl
