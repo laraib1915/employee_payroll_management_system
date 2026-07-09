@@ -1,8 +1,17 @@
 import axios from 'axios';
 
-// Use 127.0.0.1 instead of localhost
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "";
+// Determine the API base URL based on environment
+const getBaseURL = () => {
+  // If running on Vercel (production)
+  if (import.meta.env.PROD) {
+    // Use the environment variable set in Vercel
+    return import.meta.env.VITE_API_URL || '';
+  }
+  // Local development
+  return 'http://localhost:8000/api';
+};
+
+const API_BASE_URL = getBaseURL();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
