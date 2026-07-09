@@ -3,13 +3,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-import os
 
-from app.routes.employee_router import router as employee_router
-from app.routes.attendence_router import router as attendence_router
-from app.routes.payroll_router import router as payroll_router
-from app.routes.settings_router import router as settings_router
-from app.features.settings.seed_settings import seed_settings
+from app.routes.employee_router import (
+    router as employee_router
+)
+
+from app.routes.attendence_router import (
+    router as attendence_router
+)
+
+from app.routes.payroll_router import (
+    router as payroll_router
+)
+
+from app.routes.settings_router import (
+    router as settings_router
+)
+from app.features.settings.seed_settings import (
+    seed_settings
+)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,18 +37,17 @@ app = FastAPI(
     description="Backend system for managing employee payroll and attendance",
     version="1.0.0",
     lifespan=lifespan
-)
+    )
 
-# CORS - Allow all origins for production
+
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
-    "https://employee-payroll-management-system-mauve.vercel.app",
-    "https://*.vercel.app",
-    "*"
+    "https://your-vercel-app.vercel.app",  # Add your production URL
 ]
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -46,40 +57,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include API routers
+app.mount("/assets", StaticFiles(directory="app/static/assets"), name="assets")
+
 app.include_router(employee_router)
 app.include_router(attendence_router)
 app.include_router(payroll_router)
 app.include_router(settings_router)
 
-# Serve static files (React build)
-static_dir = "backend/app/static"
 
-# Only serve static files if the directory exists (local development)
-if os.path.exists(static_dir):
-    # Mount static assets
-    if os.path.exists(f"{static_dir}/assets"):
-        app.mount("/assets", StaticFiles(directory=f"{static_dir}/assets"), name="assets")
-    
-    # Serve React app for all routes
-    @app.get("/")
-    async def serve_index():
-        return FileResponse(f"{static_dir}/index.html")
-    
-    @app.get("/{full_path:path}")
-    async def serve_react_app(full_path: str):
-        # If it's an API request, skip (handled by routers above)
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
-            return None
-        
-        # Check if the requested file exists in static directory
-        file_path = f"{static_dir}/{full_path}"
-        if os.path.exists(file_path) and not os.path.isdir(file_path):
-            return FileResponse(file_path)
-        
-        # Otherwise, serve index.html (for React routing)
-        return FileResponse(f"{static_dir}/index.html")
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("app/static/index.html")
 
-@app.get("/health")
-async def health_check():
-    return {"status": "ok", "message": "API is running"}
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse("app/static/index.html")

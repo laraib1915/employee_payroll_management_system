@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Use empty string for relative URLs
-const API_BASE_URL = '';
+// Use 127.0.0.1 instead of localhost
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -10,14 +11,16 @@ const api = axios.create({
   },
 });
 
-// Response interceptor
+// Response interceptor for handling API errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     let message = 'Something went wrong. Please try again.';
 
     if (error.response) {
+      // Use the message returned by the backend
       message = error.response.data?.message || message;
+
       switch (error.response.status) {
         case 400:
         case 401:
@@ -25,9 +28,13 @@ api.interceptors.response.use(
         case 404:
         case 409:
         case 422:
+          console.error(message);
+          break;
+
         case 500:
           console.error(message);
           break;
+
         default:
           console.error(message);
       }
@@ -39,7 +46,9 @@ api.interceptors.response.use(
       console.error(message);
     }
 
+    // Replace the error message with the backend message
     error.message = message;
+
     return Promise.reject(error);
   }
 );
