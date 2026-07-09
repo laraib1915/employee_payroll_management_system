@@ -1,17 +1,7 @@
 import axios from 'axios';
 
-// Determine the API base URL based on environment
-const getBaseURL = () => {
-  // If running on Vercel (production)
-  if (import.meta.env.PROD) {
-    // Use the environment variable set in Vercel
-    return import.meta.env.VITE_API_URL || '';
-  }
-  // Local development
-  return 'http://localhost:8000/api';
-};
-
-const API_BASE_URL = getBaseURL();
+// Use relative URL - the API is served from the same server
+const API_BASE_URL = '';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -27,9 +17,7 @@ api.interceptors.response.use(
     let message = 'Something went wrong. Please try again.';
 
     if (error.response) {
-      // Use the message returned by the backend
       message = error.response.data?.message || message;
-
       switch (error.response.status) {
         case 400:
         case 401:
@@ -37,13 +25,9 @@ api.interceptors.response.use(
         case 404:
         case 409:
         case 422:
-          console.error(message);
-          break;
-
         case 500:
           console.error(message);
           break;
-
         default:
           console.error(message);
       }
@@ -55,9 +39,7 @@ api.interceptors.response.use(
       console.error(message);
     }
 
-    // Replace the error message with the backend message
     error.message = message;
-
     return Promise.reject(error);
   }
 );
