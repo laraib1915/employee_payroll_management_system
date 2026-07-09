@@ -41,7 +41,11 @@ app = FastAPI(
 
 
 origins = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://your-vercel-app.vercel.app",  # Add your production URL
 ]
 
 
@@ -60,6 +64,12 @@ app.include_router(attendence_router)
 app.include_router(payroll_router)
 app.include_router(settings_router)
 
+
 @app.get("/")
 async def serve_frontend():
+    return FileResponse("app/static/index.html")
+
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
     return FileResponse("app/static/index.html")

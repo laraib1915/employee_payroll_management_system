@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { payrollApi } from '../api/payrollApi';
 import { useNotification } from '../hooks/useNotification';
 import { MONTHS } from '../utils/constants';
-import { FiDownload, FiPlus, FiX } from 'react-icons/fi';
+import { FiDownload, FiPlus, FiX, FiAlertCircle } from 'react-icons/fi';
 
 const Payroll = () => {
   const { showSuccess, showError } = useNotification();
   const [loading, setLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  const [errorDetails, setErrorDetails] = useState(null);
   
   const [formData, setFormData] = useState({
     month: new Date().getMonth() + 1,
@@ -21,51 +22,44 @@ const Payroll = () => {
   const getErrorMessage = (error) => {
     console.error('Full error:', error);
     
-    // If error is a string, use it directly
-    if (typeof error === 'string') {
-      return error;
-    }
-    
-    // If error has a message property
-    if (error && error.message) {
-      return error.message;
-    }
-    
     // Check if error response exists
     if (error && error.response) {
       const { status, data } = error.response;
       
-      // Handle 500 errors specifically
-      if (status === 500) {
+      // Handle 404 specifically
+      if (status === 404) {
         if (data && data.message) {
+          // Check for specific error types
+          if (data.message.includes('No attendance records')) {
+            return `📋 ${data.message}`;
+          }
+          if (data.message.includes('No payroll records')) {
+            return `📋 ${data.message}`;
+          }
           return data.message;
         }
-        if (data && data.error) {
-          return data.error;
-        }
-        if (data && data.detail) {
-          return data.detail;
-        }
-        return 'The server encountered an issue. Please check if attendance data exists for the selected month or contact support.';
+        return 'No data found for the selected month. Please check if attendance records exist.';
       }
       
-      // Handle other status codes
-      if (status === 404) {
-        return 'No attendance records found for the selected month. Please upload attendance data first.';
-      }
-      
-      if (status === 403) {
-        return 'You do not have permission to perform this action.';
-      }
-      
+      // Handle 400 (Bad Request - including future month validation)
       if (status === 400) {
         if (data && data.message) {
-          return data.message;
-        }
-        if (data && data.error) {
-          return data.error;
+          return `⚠️ ${data.message}`;
         }
         return 'Invalid request. Please check your input and try again.';
+      }
+      
+      // Handle 405 (Method Not Allowed)
+      if (status === 405) {
+        return 'The requested action is not allowed. Please try refreshing the page.';
+      }
+      
+      // Handle 500 (Server Error)
+      if (status === 500) {
+        if (data && data.message) {
+          return `❌ ${data.message}`;
+        }
+        return 'The server encountered an issue. Please try again later.';
       }
       
       // If we have a data object with message
@@ -73,14 +67,9 @@ const Payroll = () => {
         if (data.message) return data.message;
         if (data.error) return data.error;
         if (data.detail) return data.detail;
-        
-        // If data is an array of errors (validation errors)
-        if (Array.isArray(data)) {
-          return data.map(err => err.msg || err.message || err).join(', ');
-        }
       }
       
-      return `Server error (${status}). Please try again later.`;
+      return `Server error (${status}). Please try again.`;
     }
     
     // Network errors (no response)
@@ -88,11 +77,17 @@ const Payroll = () => {
       return 'Network error: Unable to reach the server. Please check your internet connection.';
     }
     
+    // If error has a message property
+    if (error && error.message) {
+      return error.message;
+    }
+    
     return 'An unexpected error occurred. Please try again.';
   };
 
   const handleGenerateAndDownload = async () => {
     setLoading(true);
+    setErrorDetails(null);
     try {
       const payload = {
         month: formData.month,
@@ -110,14 +105,19 @@ const Payroll = () => {
           }))
       };
       
-      await payrollApi.generatePayroll(payload);
+      console.log('📤 Generating payroll with payload:', payload);
+      
+      const response = await payrollApi.generatePayroll(payload);
+      console.log('✅ Payroll generated:', response);
+      
       await handleExport();
       
-      showSuccess(`Payroll generated and downloaded successfully for ${MONTHS.find(m => m.value === formData.month)?.label} ${formData.year}!`);
+      showSuccess(`✅ Payroll generated and downloaded successfully for ${MONTHS.find(m => m.value === formData.month)?.label} ${formData.year}!`);
       setOverrides([]);
       
     } catch (error) {
       const errorMessage = getErrorMessage(error);
+      setErrorDetails(errorMessage);
       showError(errorMessage);
     } finally {
       setLoading(false);
@@ -126,42 +126,35 @@ const Payroll = () => {
 
   const handleExport = async () => {
     setExportLoading(true);
+    setErrorDetails(null);
     try {
-      // This will throw if there's an error (JSON response)
-      const blob = await payrollApi.exportSalarySheet(formData.month, formData.year);
+      const result = await payrollApi.exportSalarySheet(formData.month, formData.year);
       
-      // If we get here, we have a valid blob
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Salary_Sheet_${formData.month}_${formData.year}.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Cleanup
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 1000);
-      
-    } catch (error) {
-      // Error is already handled in the API layer, but we'll show it again if needed
-      const errorMessage = getErrorMessage(error);
-      
-      // Check for specific error types
-      const lowerMessage = errorMessage.toLowerCase();
-      if (lowerMessage.includes('no attendance') || 
-          lowerMessage.includes('no data') ||
-          lowerMessage.includes('no records') ||
-          lowerMessage.includes('not found') ||
-          lowerMessage.includes('404')) {
-        showError(`No attendance records found for ${MONTHS.find(m => m.value === formData.month)?.label} ${formData.year}. Please upload attendance data first.`);
+      // Check if the result is a blob (Excel file) or an error object
+      if (result instanceof Blob) {
+        // It's a valid Excel file
+        const url = window.URL.createObjectURL(result);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Salary_Sheet_${formData.month}_${formData.year}.xlsx`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 1000);
+      } else if (result && result.message) {
+        // It's an error response
+        throw new Error(result.message);
       } else {
-        showError(errorMessage);
+        throw new Error('Unexpected response format');
       }
       
-      // Re-throw for the calling function to handle
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      setErrorDetails(errorMessage);
+      showError(errorMessage);
       throw error;
     } finally {
       setExportLoading(false);
@@ -213,6 +206,14 @@ const Payroll = () => {
           <p style={styles.pageSubtitle}>Generate monthly payroll with employee adjustments</p>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {errorDetails && (
+        <div style={styles.errorBanner}>
+          <FiAlertCircle size={20} style={styles.errorIcon} />
+          <span style={styles.errorText}>{errorDetails}</span>
+        </div>
+      )}
 
       <div style={styles.card}>
         <h3 style={styles.cardTitle}>Generate Payroll</h3>
@@ -402,6 +403,24 @@ const styles = {
     fontSize: '15px',
     color: '#6b7280',
     margin: 0,
+  },
+  errorBanner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px 20px',
+    backgroundColor: '#fef2f2',
+    border: '1px solid #fecaca',
+    borderRadius: '10px',
+    marginBottom: '20px',
+    color: '#dc2626',
+  },
+  errorIcon: {
+    flexShrink: 0,
+  },
+  errorText: {
+    fontSize: '14px',
+    fontWeight: '500',
   },
   card: {
     backgroundColor: '#ffffff',

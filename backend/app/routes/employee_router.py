@@ -13,7 +13,7 @@ from app.models.employee import (
 )
 
 router = APIRouter(
-    prefix="/employees",
+    prefix="/api/employees",
     tags=["Employees"]
 )
 

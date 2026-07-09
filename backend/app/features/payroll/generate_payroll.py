@@ -1,3 +1,5 @@
+from datetime import datetime, date
+
 from app.db.mongo import get_db_conn
 from app.db.collections import collections
 
@@ -16,6 +18,16 @@ async def generate_payroll(
     payload: GeneratePayrollRequest
 ):
     try:
+        current_date = datetime.now()
+        current_month = current_date.month
+        current_year = current_date.year
+
+        if payload.year > current_year or (payload.year == current_year and payload.month > current_month):
+            return await core_response(
+                status_code=400,
+                message=f"Cannot generate payroll for future months. Current month is {current_month}/{current_year}. Please select a valid month."
+            )
+        
         db = await get_db_conn()
         settings = await db[collections.SETTINGS].find_one()
         if not settings:
@@ -32,9 +44,7 @@ async def generate_payroll(
         if not attendance_documents:
             return await core_response(
                 status_code=404,
-                message="Attendance record does not exist for the selected month and year. "
-                        "Cannot generate or download payroll. "
-                        "Please add the attendance records."
+                message=f"No attendance records found for {payload.month}/{payload.year}. Please upload attendance data first."
             )
         generated_payrolls = []
         # Generate Payroll
@@ -49,12 +59,21 @@ async def generate_payroll(
                 continue
             
             joining_date = employee.get("joining_date")
+
             if joining_date:
+                # Handle legacy JSON string dates
+                if isinstance(joining_date, str):
+                    joining_date = date.fromisoformat(joining_date)
+
+                # Handle MongoDB datetime values
+                elif isinstance(joining_date, datetime):
+                    joining_date = joining_date.date()
+
                 if (
                     joining_date.year > payload.year or
-                        (
-                        joining_date.year == payload.year and
-                        joining_date.month > payload.month
+                    (
+                        joining_date.year == payload.year
+                        and joining_date.month > payload.month
                     )
                 ):
                     continue
@@ -231,6 +250,7 @@ async def generate_payroll(
             generated_payrolls.append(payroll_data)
 
         # Generate Payroll Summary
+        logger.info(f"Generated payrolls: {len(generated_payrolls)}")
         await generate_payroll_summary(
             month=payload.month,
             year=payload.year

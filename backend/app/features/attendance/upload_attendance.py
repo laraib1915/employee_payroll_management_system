@@ -68,6 +68,34 @@ async def upload_attendance(file: UploadFile):
                 excel_file,
                 engine="xlrd"
             )
+
+        required_columns = {
+        "Employee No",
+        "Name",
+        "Date",
+        "On Duty",
+        "Off Duty",
+        "Clock In",
+        "Clock Out",
+        "Late",
+        "Early",
+        "Absent",
+        "OT Time",
+        "NDays OT",
+        "Weekend OT",
+        "Holiday OT"
+        }
+
+        missing_columns = required_columns - set(df.columns)
+
+        if missing_columns:
+            return await core_response(
+                status_code=400,
+                message="Unsupported file. Please upload a valid attendance file.",
+                data={
+                    "missing_columns": list(missing_columns)
+                }
+            )
         valid_rows = []
         errors = []
 
@@ -249,7 +277,18 @@ async def upload_attendance(file: UploadFile):
             f"{inserted_count} inserted, "
             f"{updated_count} updated"
         )
-
+        
+        if inserted_count == 0 and updated_count == 0:
+            return await core_response(
+                status_code=400,
+                message="Attendance not uploaded. No valid attendance records were found.",
+                data={
+                    "total_rows": len(df),
+                    "valid_rows": len(valid_rows),
+                    "invalid_rows": len(errors),
+                    "errors": errors
+                }
+            )
         return await core_response(
             status_code=200,
             message="Attendance uploaded successfully",

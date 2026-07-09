@@ -6,7 +6,7 @@ from app.features.settings.get_settings import get_settings
 from app.features.settings.update_settings import update_settings
 
 router = APIRouter(
-    prefix="/settings",
+    prefix="/api/settings",
     tags=["Settings"]
 )
 

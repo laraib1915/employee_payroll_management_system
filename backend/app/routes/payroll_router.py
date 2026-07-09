@@ -7,7 +7,7 @@ from app.features.payroll.generate_payroll import generate_payroll
 from app.features.payroll.export_payroll import export_salary_sheet
 
 router = APIRouter(
-    prefix="/payroll",
+    prefix="/api/payroll",
     tags=["Payroll"]
 )
 

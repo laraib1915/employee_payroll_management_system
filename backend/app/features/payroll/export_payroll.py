@@ -24,6 +24,17 @@ async def export_salary_sheet(
 ):
     try:
         db = await get_db_conn()
+        attendance_exists = await db[collections.ATTENDANCE].find_one(
+            {
+                "month": month,
+                "year": year
+            }
+        )
+        if not attendance_exists:
+            return await core_response(
+                status_code=404,
+                message=f"No attendance records found for {month}/{year}. Please upload attendance data first."
+            ) 
         payrolls = await db[collections.PAYROLL].find(
             {
                 "month": month,
@@ -33,11 +44,7 @@ async def export_salary_sheet(
         if not payrolls:
             return await core_response(
                 status_code=404,
-                message=(
-                    "Attendance record does not exist for the selected month and year. "
-                    "Cannot generate or download payroll. "
-                    "Please add the attendance records."
-                )
+                message=f"No payroll records found for {month}/{year}. Please generate payroll first."
             )
         payroll_summary = await db[collections.PAYROLL_SUMMARY].find_one(
             {
@@ -46,8 +53,9 @@ async def export_salary_sheet(
             }
         )
         if not payroll_summary:
-            raise ValueError(
-                "Payroll summary not found"
+            return await core_response(
+                status_code=404,
+                message=f"Payroll summary not found for {month}/{year}. Please regenerate payroll."
             )
         # Create Workbook
         workbook = Workbook()

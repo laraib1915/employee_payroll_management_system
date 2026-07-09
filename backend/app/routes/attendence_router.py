@@ -5,7 +5,7 @@ from app.utils.core_response import core_response
 from app.features.attendance.upload_attendance import upload_attendance
 
 router = APIRouter(
-    prefix="/attendance",
+    prefix="/api/attendance",
     tags=["Attendance"]
 )
 
