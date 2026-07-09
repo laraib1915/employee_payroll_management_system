@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-// Use relative URL - the API is served from the same server
+// Use empty string for relative URLs
+// This will work both locally and on Vercel
 const API_BASE_URL = '';
 
 const api = axios.create({
