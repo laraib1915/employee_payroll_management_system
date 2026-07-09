@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 // Use empty string for relative URLs
-// This will work both locally and on Vercel
 const API_BASE_URL = '';
 
 const api = axios.create({
@@ -11,7 +10,7 @@ const api = axios.create({
   },
 });
 
-// Response interceptor for handling API errors
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
