@@ -3,7 +3,7 @@ import axios from 'axios';
 // Use 127.0.0.1 instead of localhost
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || '';
-
+console.log('🔗 API Base URL:', API_BASE_URL || 'Using relative paths');
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
